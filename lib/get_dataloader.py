@@ -36,7 +36,7 @@ class TransformationVal(object):
         return dict(im=im, lb=lb)
 
 
-def get_data_loader(cfg, mode='train', distributed=True):
+def get_data_loader(cfg, mode='train', distributed=False):
     if mode == 'train':
         #trans_func = TransformationTrain(cfg.scales, cfg.cropsize)
         trans_func = None
