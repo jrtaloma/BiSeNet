@@ -7,6 +7,7 @@ import lib.transform_cv2 as T
 from lib.sampler import RepeatedDistSampler
 from lib.cityscapes_cv2 import CityScapes
 from lib.coco import CocoStuff
+from lib.t1 import T1
 
 
 
