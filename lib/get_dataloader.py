@@ -38,13 +38,15 @@ class TransformationVal(object):
 
 def get_data_loader(cfg, mode='train', distributed=True):
     if mode == 'train':
-        trans_func = TransformationTrain(cfg.scales, cfg.cropsize)
+        #trans_func = TransformationTrain(cfg.scales, cfg.cropsize)
+        trans_func = None
         batchsize = cfg.ims_per_gpu
         annpath = cfg.train_im_anns
         shuffle = True
         drop_last = True
     elif mode == 'val':
-        trans_func = TransformationVal()
+        #trans_func = TransformationVal()
+        trans_func = None
         batchsize = cfg.eval_ims_per_gpu
         annpath = cfg.val_im_anns
         shuffle = False
