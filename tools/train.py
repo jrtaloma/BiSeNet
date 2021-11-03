@@ -27,7 +27,7 @@ from lib.meters import TimeMeter, AvgMeter
 from lib.logger import setup_logger, print_log_msg
 
 # apex
-has_apex = True
+has_apex = False
 try:
     from apex import amp, parallel
 except ImportError:
@@ -60,7 +60,7 @@ cfg = set_cfg_from_file(args.config)
 
 
 def set_model():
-    net = model_factory[cfg.model_type](19)
+    net = model_factory[cfg.model_type](2)
     if not args.finetune_from is None:
         net.load_state_dict(torch.load(args.finetune_from, map_location='cpu'))
     if cfg.use_sync_bn: net = set_syncbn(net)
