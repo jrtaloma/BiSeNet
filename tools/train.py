@@ -198,10 +198,10 @@ def train():
     if dist.get_rank() == 0:
         torch.save(state, save_pth, _use_new_zipfile_serialization=False)
 
-    logger.info('\nevaluating the final model')
-    torch.cuda.empty_cache()
-    heads, mious = eval_model(cfg, net.module)
-    logger.info(tabulate([mious, ], headers=heads, tablefmt='orgtbl'))
+    #logger.info('\nevaluating the final model')
+    #torch.cuda.empty_cache()
+    #heads, mious = eval_model(cfg, net.module)
+    #logger.info(tabulate([mious, ], headers=heads, tablefmt='orgtbl'))
 
     return
 
