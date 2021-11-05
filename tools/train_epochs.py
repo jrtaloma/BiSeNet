@@ -178,7 +178,11 @@ def train(state_ckpt, n_epochs=100):
         iteration = checkpoint['iteration']
     else:
         iteration = 0
-    for it, (im, lb) in enumerate(list(dl)[iteration:],iteration):
+
+    for it, (im, lb) in enumerate(dl,iteration):
+        if it == cfg.max_iter:
+            break
+
         im = im.cuda()
         lb = lb.cuda()
 
