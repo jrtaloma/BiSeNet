@@ -22,7 +22,7 @@ class T1(BaseDataset):
     def __init__(self, dataroot, annpath, trans_func=None, mode='train'):
         super(T1, self).__init__(dataroot, annpath, trans_func, mode)
         self.n_cats = 2
-        self.lb_ignore = 255
+        #self.lb_ignore = 255
 
         ## label mapping
         labels = list(np.arange(self.n_cats))
