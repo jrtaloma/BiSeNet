@@ -25,7 +25,7 @@ class T1(BaseDataset):
         #self.lb_ignore = 255
 
         ## label mapping
-        labels = list(np.arange(self.n_cats))
+        labels = [0, 255]
         self.lb_map = np.arange(256)
         for ind in labels:
             self.lb_map[ind] = labels.index(ind)
