@@ -128,7 +128,7 @@ def set_meters():
     return time_meter, loss_meter, loss_pre_meter, loss_aux_meters
 
 
-def train(n_epochs=100):
+def train(state_ckpt, n_epochs=100):
     logger = logging.getLogger()
     is_dist = dist.is_initialized()
 
@@ -138,8 +138,15 @@ def train(n_epochs=100):
     ## model
     net, criteria_pre, criteria_aux = set_model()
 
+    ## state checkpoint
+    if not state_ckpt is None:
+        checkpoint = torch.load(state_ckpt)
+
     ## optimizer
-    optim = set_optimizer(net)
+    if not state_ckpt is None:
+        optim = checkpoint['optim']
+    else:
+        optim = set_optimizer(net)
 
     ## fp16
     if has_apex:
@@ -150,14 +157,26 @@ def train(n_epochs=100):
     net = set_model_dist(net)
 
     ## meters
-    time_meter, loss_meter, loss_pre_meter, loss_aux_meters = set_meters()
+    if not state_ckpt is None:
+        time_meter = checkpoint['time_meter']
+        loss_meter = checkpoint['loss_meter']
+        loss_pre_meter = checkpoint['loss_pre_meter']
+    else:
+        time_meter, loss_meter, loss_pre_meter, loss_aux_meters = set_meters()
 
     ## lr scheduler
-    lr_schdr = WarmupPolyLrScheduler(optim, power=0.9,
-        max_iter=cfg.max_iter, warmup_iter=cfg.warmup_iters,
-        warmup_ratio=0.1, warmup='exp', last_epoch=-1,)
+    if not state_ckpt is None:
+        lr_schdr = checkpoint['lr_schdr']
+    else:
+        lr_schdr = WarmupPolyLrScheduler(optim, power=0.9,
+            max_iter=cfg.max_iter, warmup_iter=cfg.warmup_iters,
+            warmup_ratio=0.1, warmup='exp', last_epoch=-1,)
 
     ## train loop
+    if not state_ckpt is None:
+        iteration = checkpoint['iteration']
+    else:
+        iteration = 0
     for it, (im, lb) in enumerate(dl[iteration:],iteration):
         im = im.cuda()
         lb = lb.cuda()
@@ -199,11 +218,11 @@ def train(n_epochs=100):
                 it, cfg.max_iter, lr, time_meter, loss_meter,
                 loss_pre_meter, loss_aux_meters)
 
-            ## dump the model
+            ## dump the model and the state
             model_pth = osp.join(cfg.respth, 'model_{}.pt'.format(int((it+1)/cfg.max_iter*n_epochs)))
             state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(int((it+1)/cfg.max_iter*n_epochs)))
-            logger.info('\nsave models to {}'.format(model_pth))
-            logger.info('\nsave state to {}'.format(state_pth))
+            logger.info('\nsave the model to {}'.format(model_pth))
+            logger.info('\nsave the state to {}'.format(state_pth))
             state = net.module.state_dict()
             if dist.get_rank() == 0:
                 torch.save(state, model_pth)
@@ -218,20 +237,10 @@ def train(n_epochs=100):
 
     ## dump the final model
     model_pth = osp.join(cfg.respth, 'model_final.pt')
-    state_pth = osp.join(cfg.respth, 'state_final.pt')
-    logger.info('\nsave models to {}'.format(model_pth))
-    logger.info('\nsave state to {}'.format(state_pth))
+    logger.info('\nsave the model to {}'.format(model_pth))
     state = net.module.state_dict()
     if dist.get_rank() == 0:
         torch.save(state, model_pth)
-        torch.save({
-            'iteration': it,
-            'optim': optim.state_dict(),
-            'lr_schdr': lr_schdr,
-            'time_meter': time_meter,
-            'loss_meter': loss_meter,
-            'loss_pre_meter': loss_pre_meter
-        }, state_pth)
 
     #logger.info('\nevaluating the final model')
     #torch.cuda.empty_cache()
