@@ -216,7 +216,7 @@ def train(state_ckpt, n_epochs=100):
                 loss_pre_meter, loss_aux_meters)
 
         ## ending one epoch
-        if (it + 1) % cfg.max_iter//n_epochs == 0:
+        if (it + 1) % (cfg.max_iter//n_epochs) == 0:
             lr = lr_schdr.get_lr()
             lr = sum(lr) / len(lr)
             print_log_msg(
