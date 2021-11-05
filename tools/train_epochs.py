@@ -128,7 +128,7 @@ def set_meters():
     return time_meter, loss_meter, loss_pre_meter, loss_aux_meters
 
 
-def train():
+def train(n_epochs=100):
     logger = logging.getLogger()
     is_dist = dist.is_initialized()
 
@@ -192,29 +192,29 @@ def train():
                 loss_pre_meter, loss_aux_meters)
 
         ## ending one epoch
-        if (it + 1) % cfg.max_iter == 0:
+        if (it + 1) % cfg.max_iter//n_epochs == 0:
             lr = lr_schdr.get_lr()
             lr = sum(lr) / len(lr)
             print_log_msg(
                 it, cfg.max_iter, lr, time_meter, loss_meter,
                 loss_pre_meter, loss_aux_meters)
 
-          ## dump the model
-          model_pth = osp.join(cfg.respth, 'model_{}.pt'.format((it+1)//cfg.max_iter))
-          state_pth = osp.join(cfg.respth, 'state_{}.pt'.format((it+1)//cfg.max_iter))
-          logger.info('\nsave models to {}'.format(model_pth))
-          logger.info('\nsave state to {}'.format(state_pth))
-          state = net.module.state_dict()
-          if dist.get_rank() == 0:
-              torch.save(state, model_pth)
-              torch.save({
-                'iteration': it,
-                'optim': optim.state_dict(),
-                'lr_schdr': lr_schdr,
-                'time_meter': time_meter,
-                'loss_meter': loss_meter,
-                'loss_pre_meter': loss_pre_meter
-              }, state_pth)
+            ## dump the model
+            model_pth = osp.join(cfg.respth, 'model_{}.pt'.format(int((it+1)/cfg.max_iter*n_epochs)))
+            state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(int((it+1)/cfg.max_iter*n_epochs)))
+            logger.info('\nsave models to {}'.format(model_pth))
+            logger.info('\nsave state to {}'.format(state_pth))
+            state = net.module.state_dict()
+            if dist.get_rank() == 0:
+                torch.save(state, model_pth)
+                torch.save({
+                    'iteration': it,
+                    'optim': optim.state_dict(),
+                    'lr_schdr': lr_schdr,
+                    'time_meter': time_meter,
+                    'loss_meter': loss_meter,
+                    'loss_pre_meter': loss_pre_meter
+                }, state_pth)
 
     ## dump the final model
     model_pth = osp.join(cfg.respth, 'model_final.pt')
@@ -223,15 +223,15 @@ def train():
     logger.info('\nsave state to {}'.format(state_pth))
     state = net.module.state_dict()
     if dist.get_rank() == 0:
-      torch.save(state, model_pth)
-      torch.save({
-        'iteration': it,
-        'optim': optim.state_dict(),
-        'lr_schdr': lr_schdr,
-        'time_meter': time_meter,
-        'loss_meter': loss_meter,
-        'loss_pre_meter': loss_pre_meter
-      }, state_pth)
+        torch.save(state, model_pth)
+        torch.save({
+            'iteration': it,
+            'optim': optim.state_dict(),
+            'lr_schdr': lr_schdr,
+            'time_meter': time_meter,
+            'loss_meter': loss_meter,
+            'loss_pre_meter': loss_pre_meter
+        }, state_pth)
 
     #logger.info('\nevaluating the final model')
     #torch.cuda.empty_cache()
