@@ -217,15 +217,11 @@ def train(state_ckpt, n_epochs=100):
 
         ## ending one epoch
         if (it + 1) % (cfg.max_iter//n_epochs) == 0:
-            lr = lr_schdr.get_lr()
-            lr = sum(lr) / len(lr)
-            print_log_msg(
-                it, cfg.max_iter, lr, time_meter, loss_meter,
-                loss_pre_meter, loss_aux_meters)
+            epoch = int((it+1)/cfg.max_iter*n_epochs)
 
             ## dump the model and the state
-            model_pth = osp.join(cfg.respth, 'model_{}.pth'.format(int((it+1)/cfg.max_iter*n_epochs)))
-            state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(int((it+1)/cfg.max_iter*n_epochs)))
+            model_pth = osp.join(cfg.respth, 'model_{}.pth'.format(epoch))
+            state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch))
             logger.info('\nsave the model to {}'.format(model_pth))
             logger.info('\nsave the state to {}'.format(state_pth))
             model = net.module.state_dict()
