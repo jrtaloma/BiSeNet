@@ -245,7 +245,7 @@ def train(state_ckpt, n_epochs=100):
     logger.info('\nsave the model to {}'.format(model_pth))
     model = net.module.state_dict()
     if dist.get_rank() == 0:
-        torch.save(model, model_pth)
+        torch.save(model, model_pth, _use_new_zipfile_serialization=False)
 
     #logger.info('\nevaluating the final model')
     #torch.cuda.empty_cache()
