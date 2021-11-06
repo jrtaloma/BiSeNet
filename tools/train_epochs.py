@@ -177,9 +177,9 @@ def train(state_ckpt, n_epochs=100):
     if not state_ckpt is None:
         iteration = checkpoint['iteration']
     else:
-        iteration = 0
+        iteration = -1
 
-    for it, (im, lb) in enumerate(dl,iteration):
+    for it, (im, lb) in enumerate(dl,iteration+1):
         if it == cfg.max_iter:
             break
 
