@@ -217,13 +217,10 @@ def train(state_ckpt, n_epochs=100):
 
         ## ending one epoch
         if (it + 1) % (cfg.max_iter//n_epochs) == 0:
-            epoch = int((it+1)/cfg.max_iter*n_epochs)
-
             ## dump the model and the state
+            epoch = int((it+1)/cfg.max_iter*n_epochs)
             model_pth = osp.join(cfg.respth, 'model_{}.pth'.format(epoch))
             state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch))
-            logger.info('\nsave the model to {}'.format(model_pth))
-            logger.info('\nsave the state to {}'.format(state_pth))
             model = net.module.state_dict()
             if dist.get_rank() == 0:
                 torch.save(model, model_pth, _use_new_zipfile_serialization=False)
@@ -236,13 +233,15 @@ def train(state_ckpt, n_epochs=100):
                     'loss_pre_meter': loss_pre_meter,
                     'loss_aux_meters': loss_aux_meters
                 }, state_pth)
+                logger.info('\nsaved the model to {}'.format(model_pth))
+                logger.info('\nsaved the state to {}'.format(state_pth))
 
     ## dump the final model
     model_pth = osp.join(cfg.respth, 'model_final.pth')
-    logger.info('\nsave the model to {}'.format(model_pth))
     model = net.module.state_dict()
     if dist.get_rank() == 0:
         torch.save(model, model_pth, _use_new_zipfile_serialization=False)
+        logger.info('\nsaved the model to {}'.format(model_pth))
 
     #logger.info('\nevaluating the final model')
     #torch.cuda.empty_cache()
