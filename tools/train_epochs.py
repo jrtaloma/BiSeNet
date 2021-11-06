@@ -144,10 +144,9 @@ def train(state_ckpt, n_epochs=100):
         checkpoint = torch.load(state_ckpt)
 
     ## optimizer
+    optim = set_optimizer(net)
     if not state_ckpt is None:
-        optim = checkpoint['optim']
-    else:
-        optim = set_optimizer(net)
+        optim.load_state_dict(checkpoint['optim'])
 
     ## fp16
     if has_apex:
@@ -162,6 +161,7 @@ def train(state_ckpt, n_epochs=100):
         time_meter = checkpoint['time_meter']
         loss_meter = checkpoint['loss_meter']
         loss_pre_meter = checkpoint['loss_pre_meter']
+        loss_aux_meters = checkpoint['loss_aux_meters']
     else:
         time_meter, loss_meter, loss_pre_meter, loss_aux_meters = set_meters()
 
@@ -237,7 +237,8 @@ def train(state_ckpt, n_epochs=100):
                     'lr_schdr': lr_schdr,
                     'time_meter': time_meter,
                     'loss_meter': loss_meter,
-                    'loss_pre_meter': loss_pre_meter
+                    'loss_pre_meter': loss_pre_meter,
+                    'loss_aux_meters': loss_aux_meters
                 }, state_pth)
 
     ## dump the final model
