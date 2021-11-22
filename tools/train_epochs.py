@@ -26,12 +26,6 @@ from lib.lr_scheduler import WarmupPolyLrScheduler
 from lib.meters import TimeMeter, AvgMeter
 from lib.logger import setup_logger, print_log_msg
 
-# apex
-has_apex = False
-try:
-    from apex import amp, parallel
-except ImportError:
-    has_apex = False
 
 
 ## fix all random seeds
@@ -48,8 +42,6 @@ torch.backends.cudnn.deterministic = True
 
 def parse_args():
     parse = argparse.ArgumentParser()
-    parse.add_argument('--local_rank', dest='local_rank', type=int, default=-1,)
-    parse.add_argument('--port', dest='port', type=int, default=44554,)
     parse.add_argument('--config', dest='config', type=str,
             default='configs/bisenetv2.py',)
     parse.add_argument('--finetune-from', type=str, default=None,)
@@ -72,10 +64,7 @@ def set_model():
     return net, criteria_pre, criteria_aux
 
 def set_syncbn(net):
-    if has_apex:
-        net = parallel.convert_syncbn_model(net)
-    else:
-        net = nn.SyncBatchNorm.convert_sync_batchnorm(net)
+    net = nn.SyncBatchNorm.convert_sync_batchnorm(net)
     return net
 
 
@@ -108,18 +97,6 @@ def set_optimizer(model):
     return optim
 
 
-def set_model_dist(net):
-    if has_apex:
-        net = parallel.DistributedDataParallel(net, delay_allreduce=True)
-    else:
-        local_rank = dist.get_rank()
-        net = nn.parallel.DistributedDataParallel(
-            net,
-            device_ids=[local_rank, ],
-            output_device=local_rank)
-    return net
-
-
 def set_meters():
     time_meter = TimeMeter(cfg.max_iter)
     loss_meter = AvgMeter('loss')
@@ -147,14 +124,6 @@ def train(state_ckpt, n_epochs=100):
     optim = set_optimizer(net)
     if not state_ckpt is None:
         optim.load_state_dict(checkpoint['optim'])
-
-    ## fp16
-    if has_apex:
-        opt_level = 'O1' if cfg.use_fp16 else 'O0'
-        net, optim = amp.initialize(net, optim, opt_level=opt_level)
-
-    ## ddp training
-    net = set_model_dist(net)
 
     ## meters
     if not state_ckpt is None:
@@ -193,13 +162,8 @@ def train(state_ckpt, n_epochs=100):
         loss_pre = criteria_pre(logits, lb)
         loss_aux = [crit(lgt, lb) for crit, lgt in zip(criteria_aux, logits_aux)]
         loss = loss_pre + sum(loss_aux)
-        if has_apex:
-            with amp.scale_loss(loss, optim) as scaled_loss:
-                scaled_loss.backward()
-        else:
-            loss.backward()
+        loss.backward()
         optim.step()
-        torch.cuda.synchronize()
         lr_schdr.step()
 
         time_meter.update()
@@ -222,26 +186,24 @@ def train(state_ckpt, n_epochs=100):
             model_pth = osp.join(cfg.respth, 'model_{}.pth'.format(epoch))
             state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch))
             model = net.module.state_dict()
-            if dist.get_rank() == 0:
-                torch.save(model, model_pth, _use_new_zipfile_serialization=False)
-                torch.save({
-                    'iteration': it,
-                    'optim': optim.state_dict(),
-                    'lr_schdr': lr_schdr,
-                    'time_meter': time_meter,
-                    'loss_meter': loss_meter,
-                    'loss_pre_meter': loss_pre_meter,
-                    'loss_aux_meters': loss_aux_meters
-                }, state_pth)
-                logger.info('\nsaved the model to {}'.format(model_pth))
-                logger.info('\nsaved the state to {}'.format(state_pth))
+            torch.save(model, model_pth, _use_new_zipfile_serialization=False)
+            torch.save({
+                'iteration': it,
+                'optim': optim.state_dict(),
+                'lr_schdr': lr_schdr,
+                'time_meter': time_meter,
+                'loss_meter': loss_meter,
+                'loss_pre_meter': loss_pre_meter,
+                'loss_aux_meters': loss_aux_meters
+            }, state_pth)
+            logger.info('\nsaved the model to {}'.format(model_pth))
+            logger.info('\nsaved the state to {}'.format(state_pth))
 
     ## dump the final model
     model_pth = osp.join(cfg.respth, 'model_final.pth')
     model = net.module.state_dict()
-    if dist.get_rank() == 0:
-        torch.save(model, model_pth, _use_new_zipfile_serialization=False)
-        logger.info('\nsaved the model to {}'.format(model_pth))
+    torch.save(model, model_pth, _use_new_zipfile_serialization=False)
+    logger.info('\nsaved the model to {}'.format(model_pth))
 
     #logger.info('\nevaluating the final model')
     #torch.cuda.empty_cache()
@@ -252,13 +214,6 @@ def train(state_ckpt, n_epochs=100):
 
 
 def main():
-    torch.cuda.set_device(args.local_rank)
-    dist.init_process_group(
-        backend='nccl',
-        init_method='tcp://127.0.0.1:{}'.format(args.port),
-        world_size=torch.cuda.device_count(),
-        rank=args.local_rank
-    )
     if not osp.exists(cfg.respth): os.makedirs(cfg.respth)
     setup_logger('{}-train'.format(cfg.model_type), cfg.respth)
     state_ckpt = args.state_checkpoint_from
