@@ -153,7 +153,7 @@ def train(state_ckpt, n_epochs=100):
     else:
         iteration = -1
 
-    for _ in range(last_epoch, n_epochs):
+    for epoch in range(last_epoch, n_epochs):
         for it, (im, lb) in enumerate(dl,iteration+1):
 
             im = im.cuda()
@@ -183,26 +183,24 @@ def train(state_ckpt, n_epochs=100):
                     it, cfg.max_iter, lr, time_meter, loss_meter,
                     loss_pre_meter, loss_aux_meters)
 
-            ## ending one epoch
-            if (it + 1) % (cfg.max_iter//n_epochs) == 0:
-                ## dump the model and the state
-                epoch = int((it+1)/cfg.max_iter*n_epochs)
-                model_pth = osp.join(cfg.respth, 'model_{}.pt'.format(epoch))
-                state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch))
-                model = net.state_dict()
-                torch.save(model, model_pth)
-                torch.save({
-                    'last_epoch': epoch,
-                    'iteration': it,
-                    'optim': optim.state_dict(),
-                    'lr_schdr': lr_schdr,
-                    'time_meter': time_meter,
-                    'loss_meter': loss_meter,
-                    'loss_pre_meter': loss_pre_meter,
-                    'loss_aux_meters': loss_aux_meters
-                }, state_pth)
-                logger.info('\nsaved the model to {}'.format(model_pth))
-                logger.info('\nsaved the state to {}'.format(state_pth))
+        ## ending one epoch
+        ## dump the model and the state
+        model_pth = osp.join(cfg.respth, 'model_{}.pt'.format(epoch+1))
+        state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch+1))
+        model = net.state_dict()
+        torch.save(model, model_pth)
+        torch.save({
+            'last_epoch': epoch+1,
+            'iteration': it,
+            'optim': optim.state_dict(),
+            'lr_schdr': lr_schdr,
+            'time_meter': time_meter,
+            'loss_meter': loss_meter,
+            'loss_pre_meter': loss_pre_meter,
+            'loss_aux_meters': loss_aux_meters
+        }, state_pth)
+        logger.info('\nsaved the model to {}'.format(model_pth))
+        logger.info('\nsaved the state to {}'.format(state_pth))
 
     ## dump the final model
     model_pth = osp.join(cfg.respth, 'model_final.pt')
