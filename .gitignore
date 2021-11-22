@@ -115,5 +115,9 @@ datasets/coco/train.txt
 datasets/coco/val.txt
 pretrained/*
 dist_train.sh
+openvino/build/*
+openvino/output*
+*.onnx
+tis/cpp_client/build/*
 
 tvm/
