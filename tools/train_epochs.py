@@ -183,10 +183,10 @@ def train(state_ckpt, n_epochs=100):
         if (it + 1) % (cfg.max_iter//n_epochs) == 0:
             ## dump the model and the state
             epoch = int((it+1)/cfg.max_iter*n_epochs)
-            model_pth = osp.join(cfg.respth, 'model_{}.pth'.format(epoch))
+            model_pth = osp.join(cfg.respth, 'model_{}.pt'.format(epoch))
             state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch))
-            model = net.module.state_dict()
-            torch.save(model, model_pth, _use_new_zipfile_serialization=False)
+            model = net.state_dict()
+            torch.save(model, model_pth)
             torch.save({
                 'iteration': it,
                 'optim': optim.state_dict(),
@@ -200,9 +200,9 @@ def train(state_ckpt, n_epochs=100):
             logger.info('\nsaved the state to {}'.format(state_pth))
 
     ## dump the final model
-    model_pth = osp.join(cfg.respth, 'model_final.pth')
-    model = net.module.state_dict()
-    torch.save(model, model_pth, _use_new_zipfile_serialization=False)
+    model_pth = osp.join(cfg.respth, 'model_final.pt')
+    model = net.state_dict()
+    torch.save(model, model_pth)
     logger.info('\nsaved the model to {}'.format(model_pth))
 
     #logger.info('\nevaluating the final model')
