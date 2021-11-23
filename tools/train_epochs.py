@@ -185,13 +185,14 @@ def train(state_ckpt, n_epochs=100):
 
         ## ending one epoch
         ## dump the model and the state
+        iteration = it
         model_pth = osp.join(cfg.respth, 'model_{}.pt'.format(epoch+1))
         state_pth = osp.join(cfg.respth, 'state_{}.pt'.format(epoch+1))
         model = net.state_dict()
         torch.save(model, model_pth)
         torch.save({
             'last_epoch': epoch+1,
-            'iteration': it,
+            'iteration': iteration,
             'optim': optim.state_dict(),
             'lr_schdr': lr_schdr,
             'time_meter': time_meter,
