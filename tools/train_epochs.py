@@ -44,6 +44,7 @@ def parse_args():
     parse = argparse.ArgumentParser()
     parse.add_argument('--config', dest='config', type=str,
             default='configs/bisenetv2.py',)
+    parse.add_argument('--epochs', type=int, default=100,)
     parse.add_argument('--finetune-from', type=str, default=None,)
     parse.add_argument('--state-checkpoint-from', type=str, default=None,)
     return parse.parse_args()
@@ -220,8 +221,9 @@ def train(state_ckpt, n_epochs=100):
 def main():
     if not osp.exists(cfg.respth): os.makedirs(cfg.respth)
     setup_logger('{}-train'.format(cfg.model_type), cfg.respth)
+    epochs = args.epochs
     state_ckpt = args.state_checkpoint_from
-    train(state_ckpt)
+    train(state_ckpt, epochs)
 
 
 if __name__ == "__main__":
