@@ -210,10 +210,10 @@ def train(state_ckpt, n_epochs=100):
     torch.save(model, model_pth)
     logger.info('\nsaved the model to {}'.format(model_pth))
 
-    #logger.info('\nevaluating the final model')
-    #torch.cuda.empty_cache()
-    #heads, mious = eval_model(cfg, net.module)
-    #logger.info(tabulate([mious, ], headers=heads, tablefmt='orgtbl'))
+    logger.info('\nevaluating the final model')
+    torch.cuda.empty_cache()
+    heads, mious = eval_model(cfg, net.module)
+    logger.info(tabulate([mious, ], headers=heads, tablefmt='orgtbl'))
 
     return
 
