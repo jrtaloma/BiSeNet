@@ -212,7 +212,7 @@ def train(state_ckpt, n_epochs=100):
 
     logger.info('\nevaluating the final model')
     torch.cuda.empty_cache()
-    heads, mious = eval_model(cfg, net.module)
+    heads, mious = eval_model(cfg, net)
     logger.info(tabulate([mious, ], headers=heads, tablefmt='orgtbl'))
 
     return
