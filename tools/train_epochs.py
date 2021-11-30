@@ -201,16 +201,16 @@ def train(state_ckpt, n_epochs=100):
             'loss_pre_meter': loss_pre_meter,
             'loss_aux_meters': loss_aux_meters
         }, state_pth)
-        logger.info('\nsaved the model to {}'.format(model_pth))
-        logger.info('saved the state to {}\n'.format(state_pth))
+        logger.info('\nEpoch {}/{}: saved the model to {}'.format(epoch+1, n_epochs, model_pth))
+        logger.info('Epoch {}/{}: saved the state to {}\n'.format(epoch+1, n_epochs, state_pth))
 
     ## dump the final model
     model_pth = osp.join(cfg.respth, 'model_final.pt')
     model = net.state_dict()
     torch.save(model, model_pth)
-    logger.info('saved the model to {}\n'.format(model_pth))
+    logger.info('Saved the model to {}\n'.format(model_pth))
 
-    logger.info('evaluating the final model\n')
+    logger.info('Evaluating the final model\n')
     torch.cuda.empty_cache()
     heads, mious = eval_model(cfg, net)
     logger.info(tabulate([mious, ], headers=heads, tablefmt='orgtbl'))
