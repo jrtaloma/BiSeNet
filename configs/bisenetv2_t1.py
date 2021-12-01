@@ -18,5 +18,5 @@ cfg = dict(
     eval_ims_per_gpu=1,
     use_fp16=False,
     use_sync_bn=False,
-    respth='/content/gdrive/MyDrive/Università/IMT_Thesis/Datasets/BraTS2019/BiSeNet',
+    respth='/content/gdrive/MyDrive/Università/IMT_Thesis/Datasets/BraTS2019/BiSeNet/256x256',
 )
